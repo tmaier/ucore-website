@@ -76,7 +76,9 @@ const links = [
 	});
 
 	function openTarget() {
-		const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+		const hash = location.hash.slice(1);
+		if (!hash) return;
+		const target = document.getElementById(decodeURIComponent(hash));
 		for (let node = target; node; node = node.parentElement) {
 			if (node instanceof HTMLDetailsElement) node.open = true;
 		}
