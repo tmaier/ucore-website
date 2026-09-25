@@ -1,0 +1,22 @@
+---
+import CommandBlock from './CommandBlock.astro';
+import Note from './Note.astro';
+import type { PickerCombination, PickerWorkflow } from '../lib/picker';
+
+interface Props {
+	workflow: PickerWorkflow;
+	combination: PickerCombination;
+}
+
+const { workflow, combination } = Astro.props;
+const fill = (value: string) => value.replaceAll('{imageRef}', combination.imageRef);
+---
+
+<h3 class="workflow-title">{workflow.label}</h3>
+{workflow.steps.map((step) => {
+	if (step.type === 'command') return <CommandBlock label={step.label} command={fill(step.command)} />;
+	if (step.type === 'link') return <p><a href={step.href}>{fill(step.text)}</a></p>;
+	if (step.type === 'checkpoint') return <Note><strong>{step.label}.</strong> {fill(step.text)}</Note>;
+	return <div class="workflow-instruction"><h4>{step.label}</h4><p>{fill(step.text)}</p></div>;
+})}
+<p class="workflow-sources">Workflow sources: {workflow.sources.map((source, index) => <span>{index > 0 && ', '}<a href={source}>{new URL(source).hostname}</a></span>)}</p>

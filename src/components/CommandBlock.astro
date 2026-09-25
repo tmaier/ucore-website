@@ -1,0 +1,58 @@
+---
+interface Props {
+	label: string;
+	command: string;
+	kind?: 'shell' | 'reference';
+}
+
+const { label, command, kind = 'shell' } = Astro.props;
+const lines = command.split('\n');
+const renderedLines: { text: string; continuation: boolean }[] = [];
+let openQuote: '"' | "'" | undefined;
+let continuesCommand = false;
+
+for (const [index, line] of lines.entries()) {
+	const continuation = kind === 'shell' && index > 0 && continuesCommand;
+	renderedLines.push({
+		text: continuation ? `    ${line.trimStart()}` : line,
+		continuation,
+	});
+
+	if (kind !== 'shell') continue;
+
+	let escaped = false;
+	for (const character of line) {
+		if (openQuote === "'") {
+			if (character === "'") openQuote = undefined;
+			continue;
+		}
+		if (escaped) {
+			escaped = false;
+			continue;
+		}
+		if (character === '\\') {
+			escaped = true;
+			continue;
+		}
+		if (openQuote === '"') {
+			if (character === '"') openQuote = undefined;
+			continue;
+		}
+		if (character === '"' || character === "'") openQuote = character;
+	}
+
+	const trailingBackslashes = line.match(/\\+$/)?.[0].length ?? 0;
+	continuesCommand = openQuote !== undefined || trailingBackslashes % 2 === 1;
+}
+---
+
+<div class="code-block" data-copy-scope data-code-kind={kind}>
+	<div class="code-header">
+		<span class="code-kind">{kind}</span>
+		<span class="sr-only">{label}</span>
+		<button class="copy" type="button" data-copy aria-label={`Copy ${label}`}>COPY</button>
+	</div>
+	<pre>{renderedLines.map(({ text, continuation }) => (
+		<span class="code-line">{kind === 'shell' && !continuation && <span class="code-prompt" aria-hidden="true">$ </span>}<code data-copy-line>{text}</code></span>
+	))}</pre>
+</div>

@@ -1,0 +1,64 @@
+---
+title: Choosing an image
+description: uCore ships as three container images. Each adds another layer of capability on top of the one before it, so you can start small and move up without reinstalling.
+sidebar:
+  order: 5
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#features
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+import ImageMatrix from '../../../components/ImageMatrix.astro';
+import Note from '../../../components/Note.astro';
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+## The three images
+
+All three are built on Fedora CoreOS and delivered from the same registry. Pick the smallest one that covers what the machine needs.
+
+| IMAGE | ADDS | LAYER |
+|---|---|---:|
+| `ucore-minimal` | Container host: Podman on Fedora CoreOS. | 01 |
+| `ucore` | Storage and NAS tools: ZFS, Samba, NFS. | 02 |
+| `ucore-hci` | Virtualization: KVM and libvirt. | 03 |
+
+### `ucore-minimal`
+
+A lightweight bare-metal or VM host for containerized workloads. It includes Cockpit services, firewalld, QEMU and VMware guest agents, Docker buildx and Compose, podman-compose, Tailscale, WireGuard tools, tmux, selected Realtek 2.5G USB Ethernet udev rules, ZFS and `pv`. It provides the uBlue signing key used for Secure Boot support of signed drivers.
+
+The Cockpit web service runs as a predefined Podman container; the `cockpit-ws` RPM is not installed. Zincati automatic update and reboot is disabled. Staged updates are provided through rpm-ostreed.
+
+### `ucore`
+
+Builds on `ucore-minimal` for storage and NAS use. It adds Cockpit storage tools, Distrobox, duperemove, full wireless firmware, mergerfs, NFS server utilities, Performance Co-Pilot, rclone, Samba, SnapRAID, usbutils, Cockpit ZFS Manager, and Sanoid/Syncoid dependencies.
+
+### `ucore-hci`
+
+Builds on `ucore` with Cockpit Machines, libvirt client and KVM daemon, and `virt-install`. Fedora's default service stop timeout can end `libvirtd` before slow VMs have shut down; consider a `TimeoutStopSec=120s` override for `libvirtd.service` if needed.
+
+## Release streams
+
+Every image is published on three streams: `lts`, `stable`, and `testing`. `stable` is the right choice for most machines. `testing` receives changes first. The `lts` stream uses the stable base with a longterm kernel.
+
+<Note>NVIDIA builds are published as tag variants of each stream, with either the current driver or the LTS driver. See <a href="#tags">Tags</a> for the full list.</Note>
+
+## Tags
+
+A full image reference combines an image name with a tag. The tag names the stream and any driver variant.
+
+<ImageMatrix />
+
+The same tags apply to `ucore-minimal`, `ucore`, and `ucore-hci`. The multi-architecture image manifest selects x86_64 or aarch64 automatically; the Fedora CoreOS installation media must still match the target machine's architecture.
+
+<CommandBlock kind="reference" label="Example image reference" command="ghcr.io/ublue-os/ucore:stable" />
+
+## Switching images
+
+Moving between existing uCore images is a rebase. The new image is staged alongside the current one and takes effect on the next reboot.
+
+<CommandBlock label="Switch an rpm-ostree-managed uCore system" command={`sudo rpm-ostree rebase \\
+  ostree-image-signed:docker://ghcr.io/ublue-os/ucore:stable`} />
+
+After the image is staged, reboot. If it does not suit the machine, the previous deployment is still there. Roll back with `rpm-ostree rollback` and reboot. For Fedora CoreOS transitions, bootc-managed systems, or more detail, see [Existing systems and rebasing](/docs/rebasing/).
+
+Source: [uCore image features and tag matrix](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#features). Checked September 18, 2026.

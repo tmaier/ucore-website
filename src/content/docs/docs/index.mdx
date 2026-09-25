@@ -1,0 +1,41 @@
+---
+title: Documentation
+description: Understand the foundation. Get to a first boot. Know where to go next.
+sidebar:
+  order: 1
+---
+
+import Note from '../../../components/Note.astro';
+
+uCore is an opinionated server operating system built on Fedora CoreOS. These guides cover choosing an image, installing or switching to uCore, and configuring the services included in each image.
+
+## Start here
+
+- [First installation](/docs/first-install/): create a Butane configuration, compile it to Ignition, and install uCore.
+- [Existing systems and rebasing](/docs/rebasing/): choose the supported switch or update path for your current deployment.
+- [Secure Boot](/docs/secure-boot/): understand kernel and module trust, enroll the Universal Blue key, and check firmware state.
+- [Find an image](/#images): select among the explicitly published image references.
+
+## Understand the images
+
+- [Choosing an image](/docs/images/): compare image families, streams, and NVIDIA variants.
+- [Verification and build transparency](/docs/verification/): verify signatures and inspect provenance, SBOMs, and releases.
+
+## Run the system
+
+- [Containers](/docs/containers/) and [services](/docs/services/)
+- [Storage with ZFS](/docs/zfs/) and [NAS sharing](/docs/nas/)
+- [SELinux troubleshooting](/docs/selinux/) and [Distrobox](/docs/distrobox/)
+- [NVIDIA workloads](/docs/nvidia/) and [build your own image](/docs/diy/)
+
+## The upstream foundations
+
+uCore is built on Fedora CoreOS but changes the installed software and system behavior. It does not use Zincati for automatic updates and reboots. Use the uCore guides for operating the installed system; these upstream references explain the underlying tools and provisioning platforms.
+
+- [Fedora CoreOS documentation](https://docs.fedoraproject.org/en-US/fedora-coreos/)
+- [Butane: writing configuration](https://coreos.github.io/butane/getting-started/)
+- [bootc documentation](https://bootc-dev.github.io/bootc/)
+
+<Note><strong>Need help?</strong> Check <a href="/announcements/">announcements</a> for known issues, then <a href="https://github.com/ublue-os/ucore/issues">search or open a project issue</a> with your image reference, version, and relevant logs. Community discussion takes place in the <a href="https://discord.gg/8RZGC3uFzA">Universal Blue Discord</a>.</Note>
+
+Source: [uCore README](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md). Reviewed September 18, 2026.

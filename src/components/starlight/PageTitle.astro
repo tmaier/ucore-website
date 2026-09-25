@@ -1,0 +1,16 @@
+---
+const { entry } = Astro.locals.starlightRoute;
+const title = entry.data.title;
+const description = entry.data.description;
+const currentGroup = Astro.locals.starlightRoute.sidebar.find((entry) =>
+	entry.type === 'group' && entry.entries.some((child) => child.type === 'link' && child.isCurrent),
+);
+---
+
+<div class="docs-page-title">
+	<nav class="docs-breadcrumb" aria-label="Breadcrumb">
+		<a href="/docs/">Docs</a><span aria-hidden="true">/</span><span>{currentGroup?.label ?? 'Overview'}</span>
+	</nav>
+	<h1 id="_top">{title}</h1>
+	{description && <p class="docs-lede">{description}</p>}
+</div>

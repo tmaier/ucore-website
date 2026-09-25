@@ -1,0 +1,28 @@
+---
+title: Manual recovery for failed image upgrades
+slug: 2026-08-18-image-upgrade-recovery
+date: '2026-08-18'
+summary: A one-time policy repair for images published August 15 through early August 18, 2026.
+source: https://github.com/ublue-os/ucore/#20260818---manual-recovery-for-failed-image-upgrades
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+historical: true
+---
+
+import CommandBlock from '../../components/CommandBlock.astro';
+
+Images published from August 15 through early August 18 contained an invalid container policy that prevented `bootc` from downloading updates. All image variants were affected. Corrected images published later on August 18 preserve the uCore container-signing policy during image builds, so the repair is only needed once on affected systems.
+
+## For affected systems only
+
+If `bootc` reports `invalid character '\x00' after top-level value` or `containers-policy.json specifies a default of insecureAcceptAnything`, the project documents this one-time repair:
+
+<CommandBlock label="Affected uCore system / repair container policy" command={`sudo cp --remove-destination \\
+  /usr/share/ublue-os/signing/usr/etc/containers/policy.json \\
+  /etc/containers/policy.json \\
+  && sudo restorecon /etc/containers/policy.json \\
+  && sudo bootc upgrade`} />
+
+The repair restores the supplied signing policy and its SELinux context before retrying the update. It is not a general instruction to relax signature verification.
+
+See [issue #431](https://github.com/ublue-os/ucore/issues/431) for the original report and resolution.

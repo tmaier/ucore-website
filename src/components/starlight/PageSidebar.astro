@@ -1,0 +1,7 @@
+---
+import TableOfContents from './TableOfContents.astro';
+
+const { toc } = Astro.locals.starlightRoute;
+---
+
+{toc?.items.some((item) => item.slug !== '_top') && <TableOfContents />}

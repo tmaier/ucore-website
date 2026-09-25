@@ -1,0 +1,36 @@
+---
+import { picker } from '../lib/picker';
+
+const streamDimension = picker.dimensions.find(({ id }) => id === 'stream');
+const gpuDimension = picker.dimensions.find(({ id }) => id === 'gpu');
+const imageDimension = picker.dimensions.find(({ id }) => id === 'image');
+const streams = ['lts', 'stable', 'testing'].filter((stream) => streamDimension?.options.some((option) => option.id === stream));
+const streamOrder = streams.length ? streams : ['stable'];
+const drivers = gpuDimension ? [
+	{ key: 'none', label: 'STREAM ONLY' },
+	...(gpuDimension.options.some((option) => option.id === 'latest') ? [{ key: 'latest', label: 'STREAM+NVIDIA' }] : []),
+	...(gpuDimension.options.some((option) => option.id === 'lts') ? [{ key: 'lts', label: 'STREAM+NVIDIA LTS' }] : []),
+] : [{ key: 'none', label: 'STREAM ONLY' }];
+const baseImage = picker.images[0]?.name;
+const imageId = imageDimension?.options.find((option) => option.label === baseImage)?.id;
+
+function tagFor(stream: string, driver: string) {
+	const combination = picker.combinations.find((item) =>
+		(!imageDimension || item.selection.image === imageId) &&
+		(!streamDimension || item.selection.stream === stream) &&
+		(!gpuDimension || item.selection.gpu === driver),
+	);
+	return combination?.imageRef.split(':').at(-1) ?? '';
+}
+---
+
+<div class="table-scroll tag-matrix-wrap">
+	<table class="tag-matrix">
+		<thead><tr>{drivers.map((driver) => <th scope="col">{driver.label}</th>)}</tr></thead>
+		<tbody>
+			{streamOrder.map((stream) => (
+				<tr>{drivers.map((driver) => <td><code>{tagFor(stream, driver.key)}</code></td>)}</tr>
+			))}
+		</tbody>
+	</table>
+</div>

@@ -1,0 +1,24 @@
+---
+title: Waiting on Fedora 42
+slug: 2025-04-30-fedora-42-delay
+date: '2025-04-30'
+summary: uCore held the previous release rather than follow upstream to kernel 6.14.0.
+source: https://github.com/ublue-os/ucore/#20250430---ucore-delaying-fedora-42-update
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+historical: true
+---
+
+Fedora CoreOS moved to Fedora 42 with kernel 6.14.0. The uCore team chose to hold its builds at the previous Fedora 41 release and kernel 6.13.8 rather than ship that kernel.
+
+The temporary pin had a practical consequence: rebasing from Fedora CoreOS 42 to the pinned Fedora 41-based uCore failed. The original announcement directed new installations to a matching older Fedora CoreOS image.
+
+## The follow-up
+
+On May 14, upstream reached kernel 6.14.3. uCore removed the pin and began building on Fedora 42. That old installation-media recommendation is historical; use the [first-install guide](/docs/first-install/) for a new machine.
+
+## A similar decision, earlier
+
+In November 2024, the project kept kernel 6.11.3 while adopting the rest of Fedora 41 because newer kernels affected Tailscale status reporting. Maintenance sometimes means holding part of an update while the underlying issue is addressed.
+
+[Read the November kernel decision](/announcements/2024-11-12-kernel-hold/).

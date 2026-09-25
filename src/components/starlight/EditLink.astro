@@ -1,0 +1,5 @@
+---
+const { editUrl } = Astro.locals.starlightRoute;
+---
+
+{editUrl && <a class="docs-edit-link" href={editUrl}>Edit this page →</a>}

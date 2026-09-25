@@ -1,0 +1,48 @@
+<script is:inline>
+	(() => {
+		const root = document.documentElement;
+		const key = 'starlight-theme';
+		let preference = '';
+		try {
+			const stored = localStorage.getItem(key);
+			if (stored === 'light' || stored === 'dark') preference = stored;
+		} catch {}
+
+		const systemTheme = () => matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+		const updateControls = () => {
+			const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+			document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+				button.setAttribute('aria-label', `Switch to ${next} theme`);
+				button.setAttribute('title', `Switch to ${next} theme`);
+			});
+		};
+		const applyTheme = () => {
+			root.dataset.theme = preference || systemTheme();
+			root.classList.add('js');
+			updateControls();
+		};
+
+		window.StarlightThemeProvider = {
+			setTheme(theme) {
+				preference = theme === 'light' || theme === 'dark' ? theme : '';
+				try {
+					localStorage.setItem(key, preference);
+				} catch {}
+				applyTheme();
+			},
+			toggleTheme() {
+				preference = root.dataset.theme === 'dark' ? 'light' : 'dark';
+				try {
+					localStorage.setItem(key, preference);
+				} catch {}
+				applyTheme();
+			},
+			updateControls,
+		};
+
+		applyTheme();
+		matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+			if (!preference) applyTheme();
+		});
+	})();
+</script>

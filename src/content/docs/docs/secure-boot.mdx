@@ -1,0 +1,61 @@
+---
+title: Secure Boot
+description: Enroll the Universal Blue signing key before relying on its signed kernel or modules.
+sidebar:
+  order: 4
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#secureboot
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+import Note from '../../../components/Note.astro';
+
+<Note><strong>Image signatures and Secure Boot are different.</strong> cosign checks the published container image. Secure Boot checks the boot chain and trusted kernel code. Verifying an image with cosign does not enroll a firmware trust key.</Note>
+
+<span id="what-needs-trust" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Trust the code you actually boot and load
+
+uCore's current `stable` and `testing` streams follow the upstream Fedora CoreOS kernel. The `lts` stream uses a longterm kernel. ZFS and NVIDIA modules also need a trusted signing key when Secure Boot is enabled.
+
+For the Universal Blue-signed kernel or modules, enroll the Universal Blue public key supplied with uCore. Do not assume that using `stable`, or choosing no NVIDIA variant, removes the need for enrollment: ZFS is included in the base images.
+
+A system may boot successfully but refuse to load an untrusted module. An untrusted kernel can prevent booting altogether. Enrollment and module loading are separate checks.
+
+<span id="enroll" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Enroll the Universal Blue key
+
+This is the documented UEFI/MOK path. Have access to the machine's console and firmware settings. Firmware interfaces vary; the enrollment menu is not an SSH interaction.
+
+1. For a fresh install, temporarily disable Secure Boot in your UEFI firmware.
+2. Install and boot uCore. Confirm you are running the intended image before continuing.
+3. Import the certificate from the installed system:
+
+<CommandBlock label="Running uCore / request MOK enrollment" command="sudo mokutil --import /etc/pki/akmods/certs/akmods-ublue.der" />
+
+Choose a temporary enrollment password when prompted. You will enter it in the firmware enrollment screen; it is not your account password.
+
+4. Reboot and complete the MOK enrollment in the console interface. Confirm the requested key and enter the password.
+5. Return to uCore and confirm the certificate is enrolled.
+6. Re-enable Secure Boot in the UEFI settings, then boot uCore again.
+
+<span id="confirm" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Confirm enrollment and Secure Boot state
+
+<CommandBlock label="Running uCore / check enrollment and firmware state" command={`mokutil --test-key /etc/pki/akmods/certs/akmods-ublue.der
+mokutil --sb-state`} />
+
+The certificate test should report that the key is enrolled. After you re-enable Secure Boot, the state check should report it enabled. If a needed module still refuses to load, investigate its signature and kernel compatibility rather than treating enrollment as proof that everything is working.
+
+On an existing uCore system, you can import the key before switching to an image that needs it. Finish the firmware enrollment before trying to boot the affected kernel. If your platform does not offer this UEFI/MOK flow, use its platform-specific guidance; do not assume the same firmware menus exist on every aarch64 system.
+
+<span id="trouble" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## If the system won't start
+
+If a previously working deployment is available, boot it and check enrollment. Otherwise use console access to review the UEFI settings and the project's [Secure Boot recovery guidance](https://github.com/ublue-os/ucore/#secureboot-failure-to-boot-recovery--troubleshooting). A rollback is an OS recovery step; it does not restore application data.
+
+Sources: [uCore Secure Boot instructions](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#secureboot), [mokutil manual](https://github.com/lcp/mokutil/blob/master/man/mokutil.1). The older stable/testing distinction has been replaced with kernel-versus-module guidance. Checked September 18, 2026.

@@ -1,0 +1,27 @@
+---
+title: NVIDIA workloads
+description: Choose an NVIDIA image variant for compatible server GPU workloads.
+sidebar:
+  order: 13
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#nvidia
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+NVIDIA image variants add a kernel driver, basic CUDA libraries, the NVIDIA Container Toolkit, and NVIDIA container SELinux policy. The published tags provide a latest open driver variant (`-nvidia`) and an LTS driver variant (`-nvidia-lts`). Check the [image picker](/#images) for exact published references.
+
+These are server images, not graphical desktops. Compatible GPUs can be used for NVDEC, NVENC, CUDA, and container workloads. The NVIDIA Container Toolkit supports rootful and rootless Podman containers and CDI; see NVIDIA's [Container Toolkit documentation](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) for runtime configuration.
+
+The driver and kernel module are built from a matching package snapshot. Choosing a driver variant changes the image reference; it does not make every GPU compatible with every driver.
+
+## Secure Boot
+
+The NVIDIA kernel module must have a signing key trusted by Secure Boot. Follow the [Secure Boot enrollment guide](/docs/secure-boot/) before relying on the driver with Secure Boot enabled. A host can boot successfully while refusing to load an untrusted module.
+
+The `-nvidia` image also includes container SELinux policy for some workloads. Certain workloads may need a container security label such as `label=type:nvidia_container_t`; follow NVIDIA's current guidance and do not disable SELinux globally.
+
+## Other driver sources
+
+If the bundled driver does not support your GPU or workload, the uCore README points to the [container-toolkit-fcos driver image](https://hub.docker.com/r/fifofonix/driver/) approach. It uses a boot-time systemd service to build or load an alternate driver in a container. In that arrangement, do not select a uCore `-nvidia` image as well; the NVIDIA Container Toolkit is still needed for container GPU access. Review that project's instructions and driver compatibility before adopting it.
+
+Source: [uCore NVIDIA guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#nvidia), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html). Checked September 18, 2026.

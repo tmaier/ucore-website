@@ -1,0 +1,87 @@
+<ucore-search class="site-search">
+	<button class="search-trigger" type="button" data-open-search aria-haspopup="dialog" aria-keyshortcuts="Control+K" aria-label="Search this site">
+		<span aria-hidden="true">⌕</span><span>Search</span><kbd>Ctrl K</kbd>
+	</button>
+	<dialog class="search-dialog" aria-label="Search projectucore.org">
+		<div class="search-dialog-header">
+			<label for="ucore-search-input">Search projectucore.org</label>
+			<button type="button" data-close-search>Close</button>
+		</div>
+		<input id="ucore-search-input" type="search" autocomplete="off" placeholder="Search docs, announcements, and the homepage" />
+		<p class="search-status" data-search-status aria-live="polite"></p>
+		<div class="search-results" id="ucore-search-results"></div>
+	</dialog>
+</ucore-search>
+
+<script>
+	class UcoreSearch extends HTMLElement {
+		private initialized = false;
+		private loading?: Promise<void>;
+
+		connectedCallback() {
+			const openButton = this.querySelector<HTMLButtonElement>('[data-open-search]');
+			const closeButton = this.querySelector<HTMLButtonElement>('[data-close-search]');
+			const dialog = this.querySelector<HTMLDialogElement>('dialog');
+			const input = this.querySelector<HTMLInputElement>('input');
+			const status = this.querySelector<HTMLElement>('[data-search-status]');
+			if (!openButton || !closeButton || !dialog || !input || !status) return;
+
+			const open = () => {
+				dialog.showModal();
+				input.focus();
+				if (!this.initialized) this.loading ??= this.initialize(status);
+			};
+			openButton.addEventListener('click', open);
+			closeButton.addEventListener('click', () => dialog.close());
+			dialog.addEventListener('click', (event) => {
+				if (event.target === dialog) dialog.close();
+			});
+			input.addEventListener('input', () => {
+				const pagefindUi = this.querySelector<HTMLInputElement>('.pagefind-ui__search-input');
+				if (pagefindUi && pagefindUi !== input) {
+					pagefindUi.value = input.value;
+					pagefindUi.dispatchEvent(new Event('input', { bubbles: true }));
+				}
+			});
+			window.addEventListener('keydown', (event) => {
+				if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+					event.preventDefault();
+					dialog.open ? dialog.close() : open();
+				}
+			});
+		}
+
+		private async initialize(status: HTMLElement) {
+			if (import.meta.env.DEV) {
+				status.textContent = 'Search is available in a production preview.';
+				return;
+			}
+			try {
+				// @ts-expect-error Pagefind ships its own browser runtime in the generated /pagefind directory.
+				const { PagefindUI } = await import('@pagefind/default-ui');
+				new PagefindUI({
+					element: '#ucore-search-results',
+					baseUrl: import.meta.env.BASE_URL,
+					bundlePath: `${import.meta.env.BASE_URL.replace(/\/$/, '')}/pagefind/`,
+					showImages: false,
+					showSubResults: true,
+					processResult: (result: { url: string; sub_results: Array<{ url: string }> }) => {
+						result.url = result.url.replace(/([^/])\/#/, '$1/#');
+						result.sub_results = result.sub_results.map((item) => ({ ...item, url: item.url.replace(/([^/])\/#/, '$1/#') }));
+					},
+				});
+				const customInput = this.querySelector<HTMLInputElement>('#ucore-search-input');
+				const pagefindInput = this.querySelector<HTMLInputElement>('.pagefind-ui__search-input');
+				if (customInput?.value && pagefindInput) {
+					pagefindInput.value = customInput.value;
+					pagefindInput.dispatchEvent(new Event('input', { bubbles: true }));
+				}
+				this.initialized = true;
+			} catch {
+				status.textContent = 'Search index could not be loaded. Browse the documentation and announcements instead.';
+			}
+		}
+	}
+
+	if (!customElements.get('ucore-search')) customElements.define('ucore-search', UcoreSearch);
+</script>

@@ -1,0 +1,86 @@
+---
+import Search from './Search.astro';
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+	current?: string;
+	docsWidth?: boolean;
+}
+
+const { current = Astro.url.pathname, docsWidth = false } = Astro.props;
+const links = [
+	{ href: '/docs/', label: 'Docs', current: current.startsWith('/docs/') },
+	{ href: '/#images', label: 'Images', current: false },
+	{ href: '/announcements/', label: 'Announcements', current: current.startsWith('/announcements/') },
+	{ href: 'https://github.com/ublue-os/ucore', label: 'Source', current: false },
+];
+---
+
+<header class="site-header" data-pagefind-ignore>
+	<div class:list={['site-header-inner', { 'docs-width': docsWidth }]}>
+		<a class="brand" href="/" aria-label="uCore homepage">
+			<span class="brand-mark" aria-hidden="true"></span>
+			<span class="brand-type">uCORE</span>
+		</a>
+		<nav class="site-nav-desktop" aria-label="Main navigation">
+			{links.map(({ href, label, current: active }) => (
+				<a href={href} aria-current={active ? 'page' : undefined}>{label}</a>
+			))}
+		</nav>
+		<div class="site-header-tools">
+			<Search />
+			<ThemeToggle />
+			<details class="site-mobile-menu">
+				<summary aria-label="Open site navigation">Menu</summary>
+				<nav class="site-mobile-nav" aria-label="Main navigation">
+					{links.map(({ href, label, current: active }) => (
+						<a href={href} aria-current={active ? 'page' : undefined}>{label}</a>
+					))}
+				</nav>
+			</details>
+		</div>
+	</div>
+</header>
+
+<script>
+	document.addEventListener('click', async (event) => {
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const button = target.closest<HTMLButtonElement>('[data-copy]');
+		if (!button) return;
+		const scope = button.closest('[data-copy-scope]');
+		if (!scope) return;
+		const lines = [...scope.querySelectorAll<HTMLElement>('[data-copy-line]')];
+		const value = lines.length
+			? lines.map((line) => line.textContent ?? '').join('\n')
+			: scope.querySelector<HTMLElement>('[data-copy-value]')?.textContent ?? '';
+		if (!value) return;
+
+		const status = document.getElementById('copy-status');
+		try {
+			await navigator.clipboard.writeText(value);
+			button.textContent = 'COPIED';
+			if (status) status.textContent = 'Copied to clipboard.';
+			window.setTimeout(() => { button.textContent = 'COPY'; }, 1800);
+		} catch {
+			button.textContent = 'SELECT TEXT';
+			const target = scope.querySelector<HTMLElement>('[data-copy-value]') ?? lines[0];
+			if (target) {
+				const range = document.createRange();
+				range.selectNodeContents(target);
+				const selection = window.getSelection();
+				selection?.removeAllRanges();
+				selection?.addRange(range);
+			}
+		}
+	});
+
+	function openTarget() {
+		const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+		for (let node = target; node; node = node.parentElement) {
+			if (node instanceof HTMLDetailsElement) node.open = true;
+		}
+	}
+	window.addEventListener('hashchange', openTarget);
+	openTarget();
+</script>

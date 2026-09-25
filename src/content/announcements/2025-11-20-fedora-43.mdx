@@ -1,0 +1,18 @@
+---
+title: Fedora 43 with a longterm kernel
+slug: 2025-11-20-fedora-43
+date: '2025-11-20'
+summary: The stable image adopted a longterm kernel, with an important Secure Boot requirement.
+source: https://github.com/ublue-os/ucore/#20251120---ucore-fedora-43-available-with-lts-kernel
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+historical: true
+---
+
+import Note from '../../components/Note.astro';
+
+This release used Fedora CoreOS 43.20251024.3.0 and longterm kernel 6.12 for stable. Testing continued to follow the upstream kernel. `mergerfs` and SnapRAID updates were available on both architectures.
+
+Using the longterm kernel favored consistent behavior over the newest hardware support. The announcement called out the need to import the Universal Blue MOK before booting that kernel with Secure Boot enabled.
+
+<Note><strong>The stream layout has changed since this entry.</strong> See the <a href="/announcements/2026-01-08-lts-sysext/">January 2026 announcement</a> and the <a href="/docs/secure-boot/">current Secure Boot guide</a>.</Note>

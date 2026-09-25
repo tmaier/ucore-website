@@ -1,0 +1,66 @@
+---
+title: NAS sharing
+description: Configure uCore's NFS and Samba tools, firewall services, and SELinux contexts.
+sidebar:
+  order: 12
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#nas---storage
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+`ucore` adds storage tools including duperemove, mergerfs, and SnapRAID, plus NFS server utilities and Samba. These packages do not configure a share or storage policy for you. Plan permissions, redundancy, backups, and network exposure before enabling file sharing.
+
+The examples below come from the uCore project README. Adapt firewall zones and paths to the host, and test access from the clients that should be allowed.
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+## NFS
+
+Read Fedora's [NFS server guide](https://docs.fedoraproject.org/en-US/fedora-server/services/filesharing-nfs-installation/) before configuring exports. If firewalld is enabled, allow NFS in the server zone:
+
+<CommandBlock label="Allow NFS through firewalld" command={`sudo firewall-cmd --permanent --zone=FedoraServer --add-service=nfs
+sudo firewall-cmd --reload`} />
+
+SELinux blocks NFS exports by default unless the shared directory has an appropriate context. For a read-only export:
+
+<CommandBlock label="Set SELinux context for a read-only NFS share" command={`sudo semanage fcontext \\
+  --add --type "public_content_t" \\
+  "/path/to/share/ro(/.*)?"`} />
+
+For a read-write export, use `public_content_rw_t` for the matching path:
+
+<CommandBlock label="Set SELinux context for a read-write NFS share" command={`sudo semanage fcontext \\
+  --add --type "public_content_rw_t" \\
+  "/path/to/share/rw(/.*)?"`} />
+
+NFS exports are configured in `/etc/exports` or `/etc/exports.d/`. After reviewing the export rules, enable and start the server:
+
+<CommandBlock label="Enable and inspect the NFS server" command={`sudo systemctl enable --now nfs-server.service
+sudo systemctl status nfs-server.service`} />
+
+## Samba
+
+Read Fedora's [Samba guide](https://docs.fedoraproject.org/en-US/quick-docs/samba/). Allow Samba in the server's firewalld zone:
+
+<CommandBlock label="Allow Samba through firewalld" command={`sudo firewall-cmd --permanent --zone=FedoraServer --add-service=samba
+sudo firewall-cmd --reload`} />
+
+For a file-context rule, replace the example path with the actual share directory:
+
+<CommandBlock label="Set SELinux context for a Samba share" command={`sudo semanage fcontext \\
+  --add --type "samba_share_t" \\
+  "/path/to/share(/.*)?"`} />
+
+Configure shares in `/etc/samba/smb.conf` or use Samba user shares. Review the access controls before enabling guest or broad network access. Then start the service:
+
+The upstream README gives this `net usershare` command shape; set a real share path and appropriate access options rather than copying placeholders literally:
+
+<CommandBlock label="Samba user share template" command={`net usershare add sharename /path/to/share \\
+  [comment] [user:{R|D|F}] [guest_ok={y|n}]`} />
+
+<CommandBlock label="Enable and inspect Samba" command={`sudo systemctl enable --now smb.service
+sudo systemctl status smb.service`} />
+
+For details on SELinux share contexts and troubleshooting, see [SELinux guidance](/docs/selinux/).
+
+Source: [uCore NAS guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#nas---storage), [Fedora NFS server documentation](https://docs.fedoraproject.org/en-US/fedora-server/services/filesharing-nfs-installation/), and [Fedora Samba documentation](https://docs.fedoraproject.org/en-US/quick-docs/samba/). Checked September 18, 2026.

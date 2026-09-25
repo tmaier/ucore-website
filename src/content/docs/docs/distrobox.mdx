@@ -1,0 +1,21 @@
+---
+title: Distrobox
+description: Use Distrobox for interactive tools that need a mutable package environment.
+sidebar:
+  order: 10
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#distrobox
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+`ucore` includes [Distrobox](https://github.com/89luca89/distrobox), which runs a mutable Linux distribution environment alongside the immutable host.
+
+## Interactive tools, not services
+
+Distrobox is useful for interactive tools that are installed conventionally, such as `htop` or `nmap`.
+
+Keep persistent services in containers rather than turning a Distrobox into a host service environment. The `ucore-minimal` image does not include Distrobox; it is part of `ucore` and `ucore-hci`.
+
+See the [container guide](/docs/containers/) for the intended service model and the [image comparison](/docs/images/) for included packages.
+
+Source: [uCore Distrobox guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#distrobox). Checked September 18, 2026.

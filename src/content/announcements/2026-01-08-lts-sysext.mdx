@@ -1,0 +1,16 @@
+---
+title: A separate LTS stream after a system-extension issue
+slug: 2026-01-08-lts-sysext
+date: '2026-01-08'
+summary: An overlayfs regression prompted a change to how the kernel streams are organized.
+source: https://github.com/ublue-os/ucore/#20260108---ucore-lts-stream-and-lts-kernel-sysext-issue
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+historical: true
+---
+
+The December 20, 2025 build included LTS kernel 6.12.63, which broke system-extension merging with an overlayfs stacking-depth error (`maximum fs stacking depth exceeded`). Kernel 6.12.62 in the December 18 build did not show the issue.
+
+The issue affected system-extension use; other LTS-kernel cases had not shown the same problem. The project restored the upstream kernel to stable and introduced a separate `lts` stream for the stable base with a longterm kernel. At publication, stable was the documented workaround for affected system-extension users.
+
+The original investigation is recorded in [issue #339](https://github.com/ublue-os/ucore/issues/339).

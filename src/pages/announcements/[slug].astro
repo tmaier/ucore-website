@@ -1,0 +1,22 @@
+---
+import { getCollection, render } from 'astro:content';
+import AnnouncementLayout from '../../layouts/AnnouncementLayout.astro';
+import { sortAnnouncements, type Announcement } from '../../lib/announcements';
+
+interface Props {
+	item: Announcement;
+	Content: Awaited<ReturnType<typeof render>>['Content'];
+}
+
+export async function getStaticPaths() {
+	const announcements = sortAnnouncements(await getCollection('announcements'));
+	return Promise.all(announcements.map(async (item) => {
+		const { Content } = await render(item);
+		return { params: { slug: item.data.slug }, props: { item, Content } };
+	}));
+}
+
+const { item, Content } = Astro.props;
+---
+
+<AnnouncementLayout item={item}><Content /></AnnouncementLayout>

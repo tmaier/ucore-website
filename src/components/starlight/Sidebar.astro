@@ -1,0 +1,13 @@
+---
+import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+
+const { sidebar } = Astro.locals.starlightRoute;
+---
+
+<div class="docs-sidebar-content" data-pagefind-ignore>
+	<div class="docs-sidebar-desktop"><SidebarSublist sublist={sidebar} /></div>
+	<details class="docs-sidebar-mobile">
+		<summary>Documentation navigation</summary>
+		<div class="docs-sidebar-mobile-content"><SidebarSublist sublist={sidebar} /></div>
+	</details>
+</div>

@@ -1,0 +1,5 @@
+---
+const { lastUpdated, lang } = Astro.locals.starlightRoute;
+---
+
+{lastUpdated && <p>Last updated <time datetime={lastUpdated.toISOString()}>{lastUpdated.toLocaleDateString(lang, { dateStyle: 'medium', timeZone: 'UTC' })}</time></p>}

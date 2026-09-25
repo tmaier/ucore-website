@@ -1,0 +1,9 @@
+---
+const { toc } = Astro.locals.starlightRoute;
+const showToc = toc?.items.some((item) => item.slug !== '_top') ?? false;
+---
+
+<div class:list={['docs-columns', { 'has-toc': showToc }]}>
+	<div class="docs-main-column"><slot /></div>
+	{showToc && <div class="docs-toc-column"><slot name="right-sidebar" /></div>}
+</div>

@@ -1,0 +1,33 @@
+---
+import TocList from './TocList.astro';
+
+const { toc } = Astro.locals.starlightRoute;
+const items = toc?.items.filter((item) => item.slug !== '_top') ?? [];
+---
+
+{items.length > 0 && (
+	<aside class="on-this-page" data-doc-toc>
+		<h2>ON THIS PAGE</h2>
+		<nav aria-label="On this page"><TocList items={items} /></nav>
+	</aside>
+)}
+
+<script>
+	const root = document.querySelector<HTMLElement>('[data-doc-toc]');
+	if (root && 'IntersectionObserver' in window) {
+		const links = [...root.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
+		const headings = links
+			.map((link) => document.getElementById(link.dataset.tocLink ?? ''))
+			.filter((heading): heading is HTMLElement => heading !== null);
+		const observer = new IntersectionObserver((entries) => {
+			const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+			if (!visible.length) return;
+			const activeId = visible[0]?.target.id;
+			for (const link of links) {
+				if (link.dataset.tocLink === activeId) link.setAttribute('aria-current', 'location');
+				else link.removeAttribute('aria-current');
+			}
+		}, { rootMargin: '-80px 0px -60% 0px' });
+		headings.forEach((heading) => observer.observe(heading));
+	}
+</script>

@@ -1,0 +1,68 @@
+---
+title: ZFS
+description: Load ZFS, choose writable pool mountpoints, schedule scrubs, and configure snapshots and replication.
+sidebar:
+  order: 11
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#zfs
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+The ZFS kernel module and tools are installed in every current uCore image, but ZFS is not configured to load by default. Load it when needed with `modprobe zfs`. For automatic loading at boot, create the module-load configuration:
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+<CommandBlock label="Configure ZFS module loading" command="echo zfs | sudo tee /etc/modules-load.d/zfs.conf" />
+
+## Use a writable mountpoint
+
+The host root filesystem is immutable. A newly created pool named `tank` defaults to `/tank`, which cannot be created on the immutable root. Choose a writable location under `/var` when creating the pool:
+
+<CommandBlock label="Create a pool with a writable mountpoint" command="sudo zpool create -m /var/tank tank /dev/REPLACE_WITH_DEVICE" />
+
+For an existing pool with an unsuitable mountpoint, change it explicitly:
+
+<CommandBlock label="Change an existing pool mountpoint" command="sudo zfs set mountpoint=/var/tank tank" />
+
+Confirm the target device before creating a pool. `zpool create` changes the selected storage device.
+
+## Scrub timers
+
+Regular scrubs check pool data integrity. uCore includes weekly and monthly systemd timers; enable one timer for each pool, substituting the pool's name:
+
+<CommandBlock label="Enable a weekly scrub" command="sudo systemctl enable --now zfs-scrub-weekly@POOL.timer" />
+
+For a monthly schedule instead:
+
+<CommandBlock label="Enable a monthly scrub" command="sudo systemctl enable --now zfs-scrub-monthly@POOL.timer" />
+
+## Snapshots and replication with Sanoid/Syncoid
+
+Sanoid and Syncoid are included with `ucore`. Sanoid has a systemd service and timer, but requires a configuration file at `/etc/sanoid/sanoid.conf`. Start from the [upstream template](https://github.com/jimsalterjrs/sanoid/blob/master/sanoid.conf), then configure the datasets you intend to snapshot. Enable the timer after reviewing the configuration:
+
+<CommandBlock label="Enable the Sanoid timer" command="sudo systemctl enable sanoid.timer" />
+
+Syncoid replication jobs depend on the backup destination and on SSH credentials. The upstream README shows a pull-style systemd service with an accompanying timer. Treat the following as a template: replace remote host, datasets, user/group IDs, and scheduling after reviewing the [Sanoid/Syncoid documentation](https://github.com/jimsalterjrs/sanoid/blob/master/INSTALL.md#RHEL/CentOS/AlmaLinux).
+
+<CommandBlock kind="reference" label="syncoid.service" command={`[Unit]
+Description=Call syncoid to pull backups from source to target
+
+[Service]
+Type=oneshot
+User=1000
+Group=1000
+ExecStart=/usr/bin/bash -c "syncoid -r core@<remote_source>:<pool/dataset> local pool/dataset"`} />
+
+<CommandBlock kind="reference" label="syncoid.timer" command={`[Unit]
+Description=Call syncoid to pull backups from source to target
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=6h
+
+[Install]
+WantedBy=timers.target`} />
+
+Enable the timer after testing the service manually. Snapshots and replication are not a substitute for independently tested backups.
+
+Source: [uCore ZFS guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#zfs), [OpenZFS Fedora documentation](https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html). Checked September 18, 2026.

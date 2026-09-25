@@ -1,0 +1,16 @@
+---
+title: Holding kernel 6.11.3
+slug: 2024-11-12-kernel-hold
+date: '2024-11-12'
+summary: A Tailscale regression led uCore to keep the previous stable kernel.
+source: https://github.com/ublue-os/ucore/#20241112---ucore-stable-has-pinned-to-kernel-version-6113
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+historical: true
+---
+
+uCore kept kernel 6.11.3 instead of moving to 6.11.5 with the Fedora 41 update. A bug in 6.11.4 and 6.11.5 affected Tailscale status reporting.
+
+The maintainers chose to hold the kernel while allowing the rest of stable to advance, expecting to follow upstream again after a later kernel update.
+
+The upstream report is [Tailscale issue #13863](https://github.com/tailscale/tailscale/issues/13863).

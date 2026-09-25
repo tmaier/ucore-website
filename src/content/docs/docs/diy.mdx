@@ -1,0 +1,21 @@
+---
+title: Build your own image
+description: Extend a published uCore image with your own Containerfile and image build workflow.
+sidebar:
+  order: 14
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#diy
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+Build a derivative image from a published uCore reference. Keep your additions in a Containerfile and use a separate build and signing workflow for your image.
+
+## Start with a published image
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+<CommandBlock label="Containerfile" command="FROM ghcr.io/ublue-os/ucore:stable" />
+
+The [Universal Blue image template](https://github.com/ublue-os/image-template) provides a starting point for the build and signing workflow. Choose a full image reference from the [supported matrix](/docs/images/). Your derivative image has its own configuration, publishing, and signing responsibilities.
+
+Source: [uCore DIY guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#diy), [Universal Blue image template](https://github.com/ublue-os/image-template). Checked September 18, 2026.

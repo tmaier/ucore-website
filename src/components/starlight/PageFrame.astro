@@ -1,0 +1,16 @@
+---
+import SiteFooter from '../SiteFooter.astro';
+---
+
+<div class="docs-page">
+	<slot name="header" />
+	<div class="docs-shell">
+		<nav class="docs-sidebar" aria-label="Documentation navigation">
+			<slot name="sidebar" />
+		</nav>
+		<div class="docs-frame-content">
+			<slot />
+		</div>
+	</div>
+	<SiteFooter docsWidth />
+</div>

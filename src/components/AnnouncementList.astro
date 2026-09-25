@@ -1,0 +1,21 @@
+---
+import { formatAnnouncementDate, type Announcement } from '../lib/announcements';
+
+interface Props {
+	items: Announcement[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="announcement-list">
+	{items.map((item) => (
+		<article class="announcement-row">
+			<time datetime={item.data.date}>{formatAnnouncementDate(item.data.date)}</time>
+			<div>
+				<h2><a href={`/announcements/${item.data.slug}/`}>{item.data.title}</a></h2>
+				<p>{item.data.summary}</p>
+			</div>
+		</article>
+	))}
+</div>

@@ -1,0 +1,8 @@
+---
+import SiteHeader from '../SiteHeader.astro';
+
+const route = Astro.locals.starlightRoute;
+const current = route.id === 'docs/index' ? '/docs/' : `/docs/${route.id.replace(/^docs\//, '')}/`;
+---
+
+<SiteHeader current={current} docsWidth />

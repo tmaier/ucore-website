@@ -1,0 +1,22 @@
+---
+interface Item {
+	text: string;
+	slug: string;
+	children: Item[];
+}
+
+interface Props {
+	items: Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<ul>
+	{items.map((item) => (
+		<li>
+			<a href={`#${item.slug}`} data-toc-link={item.slug}><span class="toc-dot" aria-hidden="true"></span>{item.text}</a>
+			{item.children.length > 0 && <Astro.self items={item.children} />}
+		</li>
+	))}
+</ul>

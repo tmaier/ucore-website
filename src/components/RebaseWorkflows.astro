@@ -1,0 +1,37 @@
+---
+import Note from './Note.astro';
+import WorkflowSteps from './WorkflowSteps.astro';
+import { picker } from '../lib/picker';
+
+const defaultSelection = Object.fromEntries(picker.dimensions.map((dimension) => [
+	dimension.id,
+	dimension.default ?? dimension.options[0]?.id ?? '',
+]));
+const combination = picker.combinations.find((item) => picker.dimensions.every(({ id }) => item.selection[id] === defaultSelection[id]));
+const states = picker.startingStates ?? [];
+const sectionIds: Record<string, string> = {
+	fresh: 'fresh-install',
+	coreos: 'fedora-coreos',
+	bootc: 'existing-bootc-managed-ucore',
+	ostree: 'existing-rpm-ostree-managed-ucore',
+	unsupported: 'unsupported-starting-systems',
+};
+---
+
+{combination && picker.workflows && states.length > 0 ? (
+	<div class="rebase-workflows">
+		<p class="fineprint">Examples below use <code>{combination.imageRef}</code>. Choose a different image and starting system in the <a href="/#images">image picker</a> to see the matching reference and steps.</p>
+		{states.map((state) => {
+			const workflowId = combination.workflows?.[state.id];
+			const workflow = workflowId ? picker.workflows?.[workflowId] : undefined;
+			if (!workflow) return null;
+			return <section class="rebase-state" aria-labelledby={sectionIds[state.id] ?? state.id}>
+				<h2 id={sectionIds[state.id] ?? state.id}>{state.label}</h2>
+				<WorkflowSteps workflow={workflow} combination={combination} />
+			</section>;
+		})}
+		<Note>An OS rollback returns to an earlier deployment. It does not restore application data or reverse database changes. Maintain and test separate backups.</Note>
+	</div>
+) : (
+	<Note>These transition examples are unavailable in the current picker fixture. Use the <a href="/docs/first-install/">first-install guide</a> and upstream instructions.</Note>
+)}

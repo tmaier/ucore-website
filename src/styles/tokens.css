@@ -1,0 +1,104 @@
+/* uCore "Substrate" theme tokens. Dark is default; light via [data-theme="light"] on <html>. */
+:root {
+  --bg: #06080C;          /* page ground */
+  --bg2: #080C12;         /* footer / secondary ground */
+  --sunk: #070B10;        /* nav hover, current-nav bg */
+  --panel: linear-gradient(#0F1620, #0A1017);   /* standard raised panel */
+  --panel2: linear-gradient(#141D29, #0D151F);  /* top-layer / emphasized panel */
+  --field: #0C1219;       /* inputs, option buttons, code wells */
+  --edge: #1F2C3B;        /* default 1px borders + dividers */
+  --edge2: #2A3949;       /* stronger borders, hover edge */
+  --ink: #F2F6FA;         /* headings */
+  --ink2: #E6ECF2;        /* body text */
+  --mute: #94A6B8;        /* secondary text, labels */
+  --accent: #4C6FFF;      /* indigo: selection, focus-adjacent */
+  --accent2: #5B7BFF;     /* indigo, lighter: link hover, layer 02 */
+  --cyan: #7FD6FF;        /* links, tags, status dot, layer 03 */
+  --btn: linear-gradient(#5B7BFF, #3C5AE8);
+  --btnink: #F2F6FA;
+  --inset: inset 0 2px 12px rgba(0,0,0,.35);
+  --lift: 0 24px 44px rgba(0,0,0,.55);
+  --lift2: 0 12px 26px rgba(0,0,0,.45);
+  --gloss: inset 0 1px 0 rgba(255,255,255,.07);
+  --glow: radial-gradient(900px 420px at 72% 40%, rgba(76,111,255,.20), transparent 70%);
+  --btn-shadow: 0 10px 30px rgba(76,111,255,.35), inset 0 1px 0 rgba(255,255,255,.35);
+
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius-sm: 6px;   /* small copy buttons, inline code (5px) */
+  --radius-md: 8px;   /* nav items, option buttons, theme toggle, sidebar links */
+  --radius-lg: 10px;  /* code wells, picker output */
+  --radius-xl: 12px;  /* panels, layer slabs, cards */
+  --radius-2xl: 16px; /* image picker wrapper */
+
+  --max-home: 1200px;
+  --max-docs: 1320px;
+  --gutter: 32px;
+  --nav-h: 64px;
+}
+
+[data-theme="light"] {
+  --bg: #E7ECF3;
+  --bg2: #E1E7F0;
+  --sunk: #D8E0EB;
+  --panel: linear-gradient(#FFFFFF, #F4F7FC);
+  --panel2: linear-gradient(#FFFFFF, #F7F9FD);
+  --field: #FDFEFF;
+  --edge: #C6D0DE;
+  --edge2: #A9B7C9;
+  --ink: #0B111A;
+  --ink2: #1A2431;
+  --mute: #5A6879;
+  --accent: #3550DC;
+  --accent2: #4C6FFF;
+  --cyan: #1E6E8C;
+  --btn: linear-gradient(#4C6FFF, #3550DC);
+  --btnink: #FFFFFF;
+  --inset: inset 0 1px 3px rgba(23,38,64,.07);
+  --lift: 0 18px 36px rgba(23,38,64,.16);
+  --lift2: 0 10px 22px rgba(23,38,64,.12);
+  --gloss: inset 0 1px 0 rgba(255,255,255,1);
+  --glow: radial-gradient(900px 420px at 72% 40%, rgba(76,111,255,.10), transparent 70%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.js):not([data-theme="light"]) {
+    color-scheme: light;
+    --bg: #E7ECF3;
+    --bg2: #E1E7F0;
+    --sunk: #D8E0EB;
+    --panel: linear-gradient(#FFFFFF, #F4F7FC);
+    --panel2: linear-gradient(#FFFFFF, #F7F9FD);
+    --field: #FDFEFF;
+    --edge: #C6D0DE;
+    --edge2: #A9B7C9;
+    --ink: #0B111A;
+    --ink2: #1A2431;
+    --mute: #5A6879;
+    --accent: #3550DC;
+    --accent2: #4C6FFF;
+    --cyan: #1E6E8C;
+    --btn: linear-gradient(#4C6FFF, #3550DC);
+    --btnink: #FFFFFF;
+    --inset: inset 0 1px 3px rgba(23,38,64,.07);
+    --lift: 0 18px 36px rgba(23,38,64,.16);
+    --lift2: 0 10px 22px rgba(23,38,64,.12);
+    --gloss: inset 0 1px 0 rgba(255,255,255,1);
+    --glow: radial-gradient(900px 420px at 72% 40%, rgba(76,111,255,.10), transparent 70%);
+  }
+}
+
+html { background: var(--bg); color: var(--ink2); font-family: var(--font-sans); scroll-padding-top: 88px; }
+body { margin: 0; }
+a { color: var(--cyan); }
+a:hover { color: var(--accent2); }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+html.reveal-ready [data-reveal="out"] { opacity: 0; transform: translateY(18px); }
+[data-reveal="in"] { animation: rise .6s cubic-bezier(.2,.7,.3,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { animation: none !important; opacity: 1 !important; }
+  * { transition: none !important; scroll-behavior: auto !important; }
+}

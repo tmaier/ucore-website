@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "url": "https://github.com/ublue-os/ucore/",
+      "revision": "75ec7d8d10bc8af6fe23a284ea108bacd50f3173",
+      "retrieved": "2026-09-18"
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "image",
+      "label": "Image",
+      "control": "select",
+      "default": "ucore",
+      "options": [
+        {
+          "id": "ucore",
+          "label": "ucore"
+        }
+      ]
+    },
+    {
+      "id": "stream",
+      "label": "Stream",
+      "control": "radio",
+      "default": "stable",
+      "options": [
+        {
+          "id": "stable",
+          "label": "Stable"
+        },
+        {
+          "id": "lts",
+          "label": "LTS kernel"
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "name": "ucore",
+      "relationship": "Container and storage host",
+      "description": "Adds storage and NAS tools, Samba and NFS, snapshot and replication tools, and full wireless firmware.",
+      "audience": "For a server that also looks after disks and shares."
+    }
+  ],
+  "startingStates": [
+    {
+      "id": "fresh",
+      "label": "A new installation"
+    },
+    {
+      "id": "coreos",
+      "label": "An existing Fedora CoreOS system"
+    },
+    {
+      "id": "bootc",
+      "label": "uCore managed with bootc"
+    },
+    {
+      "id": "ostree",
+      "label": "uCore managed with rpm-ostree"
+    },
+    {
+      "id": "unsupported",
+      "label": "Fedora Atomic desktop or Fedora IoT"
+    }
+  ],
+  "ui": {
+    "startLabel": "Where are you starting?",
+    "startPrompt": "Choose your current system",
+    "invalid": "This combination is not published. Choose another option.",
+    "unavailable": "No supported transition is defined for this starting state. Use the first-install guide.",
+    "chooseStart": "Choose your current system above to see the applicable steps. A new installation and an existing deployment need different instructions.",
+    "referenceLabel": "Selected image",
+    "architecture": "The manifest selects x86_64 or aarch64 automatically. No architecture-specific tag is needed.",
+    "sourceLabel": "Verification source"
+  },
+  "verification": {
+    "label": "Verify the published image / cosign required",
+    "command": "cosign verify \\\n  --key https://github.com/ublue-os/ucore/raw/main/cosign.pub \\\n  {imageRef}",
+    "note": "This checks the image signature. It does not enroll a Secure Boot key or replace the system signing policy.",
+    "source": "https://github.com/ublue-os/ucore/#image-verification"
+  },
+  "workflows": {
+    "fresh": {
+      "label": "First installation / prepare on another computer",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#auto-rebase-install",
+        "https://coreos.github.io/butane/getting-started/"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Use the auto-rebase template",
+          "text": "Set your credentials and replace both image references in the Butane template with {imageRef}. Read the install guide before running disk installation commands."
+        },
+        {
+          "type": "command",
+          "label": "Compile the edited Butane file",
+          "command": "podman run --interactive --rm quay.io/coreos/butane:release \\\n  --pretty --strict < ucore-autorebase.butane > ucore-autorebase.ign"
+        },
+        {
+          "type": "link",
+          "text": "Continue with first-install instructions",
+          "href": "/docs/first-install/"
+        }
+      ]
+    },
+    "coreos": {
+      "label": "Existing Fedora CoreOS / two-stage transition",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#manual-installrebase",
+        "https://github.com/ublue-os/ucore/#verified-image-updates"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Before changing the OS",
+          "text": "Back up application data and read the Secure Boot guidance before rebooting into a different kernel. This path starts from Fedora CoreOS, not a desktop Atomic system."
+        },
+        {
+          "type": "command",
+          "label": "Initial CoreOS rebase",
+          "command": "sudo rpm-ostree rebase \\\n  ostree-unverified-registry:{imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Reboot into uCore",
+          "text": "Run the reboot command only after the rebase succeeds. The initial reference does not enforce the uCore image-signing policy."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after the initial rebase",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "instruction",
+          "label": "Once running uCore",
+          "text": "Continue only after you have booted uCore. Its installed signing policy enables the signed-reference step below."
+        },
+        {
+          "type": "command",
+          "label": "Select the signed reference",
+          "command": "sudo rpm-ostree rebase \\\n  ostree-image-signed:docker://{imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Reboot again",
+          "text": "After the signed rebase succeeds, reboot and confirm the booted signed reference."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after the signed rebase",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "command",
+          "label": "Check the booted deployment after reboot",
+          "command": "sudo rpm-ostree status"
+        },
+        {
+          "type": "link",
+          "text": "Read the Secure Boot guidance",
+          "href": "/docs/secure-boot/"
+        }
+      ]
+    },
+    "bootc": {
+      "label": "Existing uCore / bootc-managed deployment",
+      "sources": [
+        "https://bootc-dev.github.io/bootc/man/bootc-switch.8.html",
+        "https://github.com/ublue-os/ucore/#announcements"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Check the current deployment",
+          "text": "This path requires an existing bootc-managed uCore system with its container-signing policy intact. If an August 2026 image cannot fetch updates, read the recovery announcement first."
+        },
+        {
+          "type": "command",
+          "label": "Inspect current image",
+          "command": "sudo bootc status"
+        },
+        {
+          "type": "command",
+          "label": "Stage the selected image with policy enforcement",
+          "command": "sudo bootc switch --enforce-container-sigpolicy \\\n  {imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Apply on reboot",
+          "text": "After staging succeeds, check Secure Boot requirements and reboot when your workloads are ready."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after staging",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "command",
+          "label": "Confirm the booted image after reboot",
+          "command": "sudo bootc status"
+        },
+        {
+          "type": "link",
+          "text": "August 2026 image-policy recovery",
+          "href": "/announcements/2026-08-18-image-upgrade-recovery/"
+        }
+      ]
+    },
+    "ostree": {
+      "label": "Existing uCore / rpm-ostree-managed deployment",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#verified-image-updates"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Use the installed signing policy",
+          "text": "This path is for an existing uCore system still managed with rpm-ostree. Check Secure Boot before changing kernels."
+        },
+        {
+          "type": "command",
+          "label": "Stage the selected signed image",
+          "command": "sudo rpm-ostree rebase \\\n  ostree-image-signed:docker://{imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Apply on reboot",
+          "text": "After staging succeeds, reboot when your workloads are ready."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after staging",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "command",
+          "label": "Confirm after reboot",
+          "command": "sudo rpm-ostree status"
+        }
+      ]
+    },
+    "unsupported": {
+      "label": "This rebase path is unsupported",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#manual-installrebase"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Provision Fedora CoreOS instead",
+          "text": "uCore does not support rebasing from Fedora Atomic desktops or Fedora IoT. Start with a new Fedora CoreOS installation and an Ignition configuration."
+        },
+        {
+          "type": "link",
+          "text": "Read the first-install guide",
+          "href": "/docs/first-install/"
+        }
+      ]
+    }
+  },
+  "combinations": [
+    {
+      "id": "ucore-stable",
+      "selection": {
+        "image": "ucore",
+        "stream": "stable"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:stable",
+      "description": "A container and storage host with NAS tools, on the stable Fedora CoreOS base. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-lts",
+      "selection": {
+        "image": "ucore",
+        "stream": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:lts",
+      "description": "A container and storage host with NAS tools, on the stable base with a longterm kernel. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+---
+title: Containers
+description: Run container workloads on uCore's immutable operating system base.
+sidebar:
+  order: 7
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#podman
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+The root filesystem is immutable at runtime. uCore is designed for running services as containers rather than installing packages into the running base. Make persistent changes to the OS through an image build.
+
+Podman is the expected container runtime. Docker's Moby engine is also installed, with Docker Buildx and Compose. `docker.socket` is disabled by default; Fedora CoreOS cautions against running Docker and Podman workloads simultaneously. Use both only when you understand the interaction between their container and network stacks.
+
+## Container restart at boot
+
+By default, uCore does not start `restart: always` containers at boot. For rootless containers under the `core` user, enable the user-level restart service:
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+<CommandBlock label="core user / enable Podman restart service" command={`mkdir -p /var/home/core/.config/systemd/user
+cp /lib/systemd/system/podman-restart.service \\
+  /var/home/core/.config/systemd/user
+systemctl --user enable podman-restart.service
+systemctl --user list-unit-files | grep podman`} />
+
+You may also need user lingering to keep interactive rootless containers alive after logout:
+
+<CommandBlock label="core user / enable lingering" command="loginctl enable-linger $UID" />
+
+For rootful containers, enable the system service:
+
+<CommandBlock label="Rootful containers / enable restart service" command="sudo systemctl enable podman-restart.service" />
+
+## Podman and firewalld
+
+Podman and firewalld reloads can conflict: a `firewall-cmd --reload` may remove firewall rules created by Podman. If this affects your host, enable the netavark firewalld reload service:
+
+<CommandBlock label="Enable Podman firewall rule restoration" command="sudo systemctl enable --now netavark-firewalld-reload.service" />
+
+## Included tools
+
+`ucore-minimal` includes Podman, Docker/Moby, Compose tools, and a Cockpit Podman service. The Cockpit web service runs as a predefined Podman container; the `cockpit-ws` RPM is not installed. Image-specific additions are listed in [Images and streams](/docs/images/).
+
+Source: [uCore Podman guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#podman), [Fedora CoreOS container FAQ](https://docs.fedoraproject.org/en-US/fedora-coreos/faq/). Checked September 18, 2026.

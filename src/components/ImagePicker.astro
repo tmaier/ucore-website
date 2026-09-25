@@ -1,0 +1,93 @@
+---
+import { findCombination, picker } from '../lib/picker';
+
+const defaults = Object.fromEntries(picker.dimensions.map((dimension) => [
+	dimension.id,
+	dimension.default ?? dimension.options[0]?.id ?? '',
+]));
+const selected = findCombination(defaults);
+if (!selected) throw new Error('Picker defaults must resolve to a published image.');
+const clientManifest = {
+	dimensions: picker.dimensions,
+	images: picker.images,
+	combinations: picker.combinations.map(({ id, selection, imageRef }) => ({ id, selection, imageRef })),
+	ui: { invalid: picker.ui.invalid },
+};
+const serialized = JSON.stringify(clientManifest).replaceAll('<', '\\u003c');
+const visibleDimensions = picker.dimensions.filter((dimension) => dimension.options.length > 1);
+
+function labelFor(dimension: string, option: { id: string; label: string }) {
+	if (dimension === 'stream') return option.id;
+	if (dimension === 'gpu') return option.id === 'latest' ? 'nvidia' : option.id === 'lts' ? 'nvidia-lts' : 'none';
+	return option.label;
+}
+
+const dimensionLabels = new Map(picker.dimensions.map((dimension) => [
+	dimension.id,
+	new Map(dimension.options.map((option) => [option.id, labelFor(dimension.id, option)])),
+]));
+---
+
+<div class="image-picker" data-picker data-pagefind-ignore hidden>
+	<script is:inline type="application/json" id="picker-data" set:html={serialized}></script>
+	<div class="image-builder-bar">
+		<span class="image-builder-label">IMAGE BUILDER</span>
+		<span class="builder-status" data-stream-status aria-live="polite">
+			<span class="status-dot" aria-hidden="true"></span><span data-stream-label>{defaults.stream.toUpperCase()}</span>
+		</span>
+	</div>
+	<div class="picker-groups" data-picker-groups>
+		{visibleDimensions.map((dimension) => (
+			<div class="picker-group" role="group" aria-labelledby={`picker-label-${dimension.id}`} data-picker-group={dimension.id}>
+				<div class="picker-group-label" id={`picker-label-${dimension.id}`}>{dimension.label}</div>
+				<div class="picker-options">
+					{dimension.options.map((option) => (
+						<button
+							class="picker-option"
+							type="button"
+							data-picker-option
+							data-dimension={dimension.id}
+							data-option={option.id}
+							aria-pressed={defaults[dimension.id] === option.id ? 'true' : 'false'}
+						>
+							<span class="picker-option-main"><span class="option-dot" aria-hidden="true"></span>{labelFor(dimension.id, option)}</span>
+							<span class="picker-option-mark" aria-hidden="true">{defaults[dimension.id] === option.id ? '✓' : ''}</span>
+						</button>
+					))}
+				</div>
+			</div>
+		))}
+	</div>
+	<div class="image-output-area">
+		<div class="image-output" data-copy-scope>
+			<code data-copy-value>{selected.imageRef}</code>
+			<button class="copy-button" type="button" data-copy aria-label="Copy image reference">COPY</button>
+		</div>
+		<p class="image-hint" data-image-hint>{picker.images.find((image) => image.name === dimensionLabels.get('image')?.get(selected.selection.image))?.hint}</p>
+		<p class="status-message" data-picker-live aria-live="polite"></p>
+	</div>
+</div>
+
+<details class="picker-fallback" data-pagefind-ignore>
+	<summary>Browse all published image references</summary>
+	<div class="table-scroll">
+		<table>
+			<caption>Published uCore image references</caption>
+			<thead><tr>{visibleDimensions.map((dimension) => <th scope="col">{dimension.label}</th>)}<th scope="col">FULL IMAGE REFERENCE</th></tr></thead>
+			<tbody>
+				{picker.combinations.map((combination) => (
+					<tr>
+						{visibleDimensions.map((dimension) => (
+							<td>{dimensionLabels.get(dimension.id)?.get(combination.selection[dimension.id])}</td>
+						))}
+						<td><code>{combination.imageRef}</code></td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+</details>
+
+<script>
+	import '../scripts/picker';
+</script>

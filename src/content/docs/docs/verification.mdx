@@ -1,0 +1,68 @@
+---
+title: Verification and build transparency
+description: Verify signed uCore images and inspect package provenance, SBOMs, and release changelogs.
+sidebar:
+  order: 6
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#image-verification
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+Image signatures, Secure Boot, and system signing policy answer different questions. cosign verifies a published image signature. Secure Boot trusts the boot chain and signed kernel or modules; it is not enabled by running cosign.
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+## Verify an image reference
+
+The uCore project publishes its cosign public key. Verify a tag with:
+
+<CommandBlock label="Verify a published uCore tag" command={`cosign verify \\
+  --key https://github.com/ublue-os/ucore/raw/main/cosign.pub \\
+  ghcr.io/ublue-os/ucore:stable`} />
+
+For an exact image, verify its immutable digest instead of the moving tag:
+
+<CommandBlock label="Verify an image digest" command={`cosign verify \\
+  --key https://github.com/ublue-os/ucore/raw/main/cosign.pub \\
+  ghcr.io/ublue-os/IMAGE@sha256:IMAGE_DIGEST`} />
+
+See the [Secure Boot guide](/docs/secure-boot/) for firmware key enrollment and module trust.
+
+## RPM package provenance
+
+Each image build produces a `package-provenance.txt` report for the image and architecture. Its `name|evr|arch|from_repo` fields identify the package, epoch-version-release, architecture, and source repository. Download it from the matching [GitHub Actions](https://github.com/ublue-os/ucore/actions) run's `image-*` artifact. Build artifacts are retained for seven days; for a durable inventory, use the SBOM.
+
+## Software bill of materials
+
+Signed SPDX JSON SBOMs are published for each architecture-specific image digest. A multi-architecture tag resolves to a platform-specific image, so each SBOM is attached to that architecture's image digest.
+
+Resolve the amd64 image digest:
+
+<CommandBlock label="Resolve the amd64 image digest" command={`skopeo inspect --raw docker://ghcr.io/ublue-os/ucore:stable \\
+  | jq -r \\
+    '.manifests[]
+    | select(.platform.os == "linux"
+      and .platform.architecture == "amd64")
+    | .digest'`} />
+
+Discover the SPDX SBOM attached to that image digest:
+
+<CommandBlock label="Find the SBOM artifact" command={`oras discover \\
+  --artifact-type application/vnd.spdx+json \\
+  ghcr.io/ublue-os/ucore@sha256:IMAGE_DIGEST`} />
+
+Pull the artifact and verify its signature with the same public key:
+
+<CommandBlock label="Download an SBOM artifact" command="oras pull ghcr.io/ublue-os/ucore@sha256:SBOM_ARTIFACT_DIGEST" />
+
+<CommandBlock label="Verify an SBOM artifact" command={`cosign verify \\
+  --key https://github.com/ublue-os/ucore/raw/main/cosign.pub \\
+  ghcr.io/ublue-os/ucore@sha256:SBOM_ARTIFACT_DIGEST`} />
+
+## Releases and changelogs
+
+[GitHub Releases](https://github.com/ublue-os/ucore/releases) provide generated changelogs for stable, testing, and lts. Tags use the stream and date, such as `stable-YYYYMMDD`; stable is marked as GitHub's latest release. Releases follow successful full image builds. Scheduled builds without relevant RPM changes do not publish releases.
+
+Changelogs group RPM additions, removals, and upgrades by image family, NVIDIA variant, and architecture. Releases are changelog notes, not image downloads. Images remain in [GitHub Container Registry](https://github.com/orgs/ublue-os/packages?repo_name=ucore).
+
+Source: [uCore verification and build transparency](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#build-transparency-and-releases). Checked September 18, 2026.

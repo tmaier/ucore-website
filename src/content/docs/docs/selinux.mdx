@@ -1,0 +1,31 @@
+---
+title: SELinux troubleshooting
+description: Diagnose SELinux denials without disabling SELinux on a uCore host.
+sidebar:
+  order: 9
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#selinux-troubleshooting
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+SELinux is an integral part of the Fedora Atomic system design. The uCore project strongly recommends that you **do not disable SELinux**. Disabling it can make it difficult to restore the expected state.
+
+## Temporarily set permissive mode for diagnosis
+
+For a short troubleshooting test, permissive mode keeps SELinux active and reporting while temporarily not enforcing denials. Return to enforcing mode when the test is complete:
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+<CommandBlock label="Temporarily set permissive mode for diagnosis" command={`sudo setenforce 0
+getenforce`} />
+
+After diagnosing, restore enforcing mode:
+
+<CommandBlock label="Restore SELinux enforcing mode" command={`sudo setenforce 1
+getenforce`} />
+
+## Share-specific contexts
+
+For shared directories, prefer a file-context rule that matches the intended service. The [NAS guide](/docs/nas/) has the uCore README's example contexts for NFS and Samba. For general investigation, follow Fedora's [SELinux troubleshooting guide](https://docs.fedoraproject.org/en-US/quick-docs/selinux-troubleshooting/).
+
+Source: [uCore SELinux guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#selinux-troubleshooting), [Fedora SELinux troubleshooting](https://docs.fedoraproject.org/en-US/quick-docs/selinux-troubleshooting/). Checked September 18, 2026.

@@ -1,0 +1,774 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "url": "https://github.com/ublue-os/ucore/",
+      "revision": "75ec7d8d10bc8af6fe23a284ea108bacd50f3173",
+      "retrieved": "2026-09-18"
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "image",
+      "label": "IMAGE",
+      "control": "select",
+      "default": "ucore",
+      "options": [
+        {
+          "id": "minimal",
+          "label": "ucore-minimal"
+        },
+        {
+          "id": "ucore",
+          "label": "ucore"
+        },
+        {
+          "id": "hci",
+          "label": "ucore-hci"
+        }
+      ]
+    },
+    {
+      "id": "stream",
+      "label": "RELEASE STREAM",
+      "control": "select",
+      "default": "stable",
+      "options": [
+        {
+          "id": "lts",
+          "label": "lts"
+        },
+        {
+          "id": "stable",
+          "label": "stable"
+        },
+        {
+          "id": "testing",
+          "label": "testing"
+        }
+      ]
+    },
+    {
+      "id": "gpu",
+      "label": "NVIDIA DRIVER",
+      "control": "select",
+      "default": "none",
+      "options": [
+        {
+          "id": "none",
+          "label": "none"
+        },
+        {
+          "id": "latest",
+          "label": "nvidia"
+        },
+        {
+          "id": "lts",
+          "label": "nvidia-lts"
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "name": "ucore-minimal",
+      "relationship": "LAYER 01",
+      "description": "Container host on Fedora CoreOS.",
+      "audience": "For a server whose main job is running containers.",
+      "hint": "A container host and nothing else. Add what you need on top."
+    },
+    {
+      "name": "ucore",
+      "relationship": "LAYER 02",
+      "description": "Adds storage and NAS tools: ZFS, Samba, NFS.",
+      "audience": "For a server that also looks after disks and shares.",
+      "hint": "Adds ZFS, Samba, and NFS for storage and file sharing."
+    },
+    {
+      "name": "ucore-hci",
+      "relationship": "LAYER 03",
+      "description": "Adds virtualization: KVM and libvirt.",
+      "audience": "For a server that also hosts virtual machines.",
+      "hint": "Everything in ucore, plus KVM and libvirt for virtual machines."
+    }
+  ],
+  "startingStates": [
+    {
+      "id": "fresh",
+      "label": "A new installation"
+    },
+    {
+      "id": "coreos",
+      "label": "An existing Fedora CoreOS system"
+    },
+    {
+      "id": "bootc",
+      "label": "uCore managed with bootc"
+    },
+    {
+      "id": "ostree",
+      "label": "uCore managed with rpm-ostree"
+    },
+    {
+      "id": "unsupported",
+      "label": "Fedora Atomic desktop or Fedora IoT"
+    }
+  ],
+  "ui": {
+    "startLabel": "Where are you starting?",
+    "startPrompt": "Choose your current system",
+    "invalid": "This combination is not published. Choose another option.",
+    "unavailable": "No supported transition is defined for this starting state. Use the first-install guide.",
+    "chooseStart": "Choose your current system above to see the applicable steps. A new installation and an existing deployment need different instructions.",
+    "referenceLabel": "Selected image",
+    "architecture": "The manifest selects x86_64 or aarch64 automatically. No architecture-specific tag is needed.",
+    "sourceLabel": "Verification source"
+  },
+  "verification": {
+    "label": "Verify the published image / cosign required",
+    "command": "cosign verify \\\n  --key https://github.com/ublue-os/ucore/raw/main/cosign.pub \\\n  {imageRef}",
+    "note": "This checks the image signature. It does not enroll a Secure Boot key or replace the system signing policy.",
+    "source": "https://github.com/ublue-os/ucore/#image-verification"
+  },
+  "workflows": {
+    "fresh": {
+      "label": "First installation / prepare on another computer",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#auto-rebase-install",
+        "https://coreos.github.io/butane/getting-started/"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Use the auto-rebase template",
+          "text": "Set your credentials and replace both image references in the Butane template with {imageRef}. Read the install guide before running disk installation commands."
+        },
+        {
+          "type": "command",
+          "label": "Compile the edited Butane file",
+          "command": "podman run --interactive --rm quay.io/coreos/butane:release \\\n  --pretty --strict < ucore-autorebase.butane > ucore-autorebase.ign"
+        },
+        {
+          "type": "link",
+          "text": "Continue with first-install instructions",
+          "href": "/docs/first-install/"
+        }
+      ]
+    },
+    "coreos": {
+      "label": "Existing Fedora CoreOS / two-stage transition",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#manual-installrebase",
+        "https://github.com/ublue-os/ucore/#verified-image-updates"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Before changing the OS",
+          "text": "Back up application data and read the Secure Boot guidance before rebooting into a different kernel. This path starts from Fedora CoreOS, not a desktop Atomic system."
+        },
+        {
+          "type": "command",
+          "label": "Initial CoreOS rebase",
+          "command": "sudo rpm-ostree rebase \\\n  ostree-unverified-registry:{imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Reboot into uCore",
+          "text": "Run the reboot command only after the rebase succeeds. The initial reference does not enforce the uCore image-signing policy."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after the initial rebase",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "instruction",
+          "label": "Once running uCore",
+          "text": "Continue only after you have booted uCore. Its installed signing policy enables the signed-reference step below."
+        },
+        {
+          "type": "command",
+          "label": "Select the signed reference",
+          "command": "sudo rpm-ostree rebase \\\n  ostree-image-signed:docker://{imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Reboot again",
+          "text": "After the signed rebase succeeds, reboot and confirm the booted signed reference."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after the signed rebase",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "command",
+          "label": "Check the booted deployment after reboot",
+          "command": "sudo rpm-ostree status"
+        },
+        {
+          "type": "link",
+          "text": "Read the Secure Boot guidance",
+          "href": "/docs/secure-boot/"
+        }
+      ]
+    },
+    "bootc": {
+      "label": "Existing uCore / bootc-managed deployment",
+      "sources": [
+        "https://bootc-dev.github.io/bootc/man/bootc-switch.8.html",
+        "https://github.com/ublue-os/ucore/#announcements"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Check the current deployment",
+          "text": "This path requires an existing bootc-managed uCore system with its container-signing policy intact. If an August 2026 image cannot fetch updates, read the recovery announcement first."
+        },
+        {
+          "type": "command",
+          "label": "Inspect current image",
+          "command": "sudo bootc status"
+        },
+        {
+          "type": "command",
+          "label": "Stage the selected image with policy enforcement",
+          "command": "sudo bootc switch --enforce-container-sigpolicy \\\n  {imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Apply on reboot",
+          "text": "After staging succeeds, check Secure Boot requirements and reboot when your workloads are ready."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after staging",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "command",
+          "label": "Confirm the booted image after reboot",
+          "command": "sudo bootc status"
+        },
+        {
+          "type": "link",
+          "text": "August 2026 image-policy recovery",
+          "href": "/announcements/2026-08-18-image-upgrade-recovery/"
+        }
+      ]
+    },
+    "ostree": {
+      "label": "Existing uCore / rpm-ostree-managed deployment",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#verified-image-updates"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Use the installed signing policy",
+          "text": "This path is for an existing uCore system still managed with rpm-ostree. Check Secure Boot before changing kernels."
+        },
+        {
+          "type": "command",
+          "label": "Stage the selected signed image",
+          "command": "sudo rpm-ostree rebase \\\n  ostree-image-signed:docker://{imageRef}"
+        },
+        {
+          "type": "checkpoint",
+          "label": "Apply on reboot",
+          "text": "After staging succeeds, reboot when your workloads are ready."
+        },
+        {
+          "type": "command",
+          "label": "Reboot after staging",
+          "command": "sudo systemctl reboot"
+        },
+        {
+          "type": "command",
+          "label": "Confirm after reboot",
+          "command": "sudo rpm-ostree status"
+        }
+      ]
+    },
+    "unsupported": {
+      "label": "This rebase path is unsupported",
+      "sources": [
+        "https://github.com/ublue-os/ucore/#manual-installrebase"
+      ],
+      "steps": [
+        {
+          "type": "instruction",
+          "label": "Reinstall and switch to uCore",
+          "text": "uCore does not support rebasing from Fedora Atomic desktops or Fedora IoT. Use the CoreOS installer to reinstall with the uCore auto-rebase Ignition configuration, which switches the machine to uCore on first boot."
+        },
+        {
+          "type": "link",
+          "text": "Read the first-install guide",
+          "href": "/docs/first-install/"
+        }
+      ]
+    }
+  },
+  "combinations": [
+    {
+      "id": "minimal-stable",
+      "selection": {
+        "image": "minimal",
+        "stream": "stable",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:stable",
+      "description": "A lightweight container host with ZFS, in the uCore stable stream. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-stable-nvidia",
+      "selection": {
+        "image": "minimal",
+        "stream": "stable",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:stable-nvidia",
+      "description": "A lightweight container host with ZFS, in the uCore stable stream, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-stable-nvidia-lts",
+      "selection": {
+        "image": "minimal",
+        "stream": "stable",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:stable-nvidia-lts",
+      "description": "A lightweight container host with ZFS, in the uCore stable stream, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-testing",
+      "selection": {
+        "image": "minimal",
+        "stream": "testing",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:testing",
+      "description": "A lightweight container host with ZFS, in the uCore testing stream. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-testing-nvidia",
+      "selection": {
+        "image": "minimal",
+        "stream": "testing",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:testing-nvidia",
+      "description": "A lightweight container host with ZFS, in the uCore testing stream, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-testing-nvidia-lts",
+      "selection": {
+        "image": "minimal",
+        "stream": "testing",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:testing-nvidia-lts",
+      "description": "A lightweight container host with ZFS, in the uCore testing stream, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-lts",
+      "selection": {
+        "image": "minimal",
+        "stream": "lts",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:lts",
+      "description": "A lightweight container host with ZFS, on the stable base with a longterm kernel. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-lts-nvidia",
+      "selection": {
+        "image": "minimal",
+        "stream": "lts",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:lts-nvidia",
+      "description": "A lightweight container host with ZFS, on the stable base with a longterm kernel, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "minimal-lts-nvidia-lts",
+      "selection": {
+        "image": "minimal",
+        "stream": "lts",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-minimal:lts-nvidia-lts",
+      "description": "A lightweight container host with ZFS, on the stable base with a longterm kernel, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-stable",
+      "selection": {
+        "image": "ucore",
+        "stream": "stable",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:stable",
+      "description": "A container and storage host with NAS tools, in the uCore stable stream. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-stable-nvidia",
+      "selection": {
+        "image": "ucore",
+        "stream": "stable",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:stable-nvidia",
+      "description": "A container and storage host with NAS tools, in the uCore stable stream, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-stable-nvidia-lts",
+      "selection": {
+        "image": "ucore",
+        "stream": "stable",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:stable-nvidia-lts",
+      "description": "A container and storage host with NAS tools, in the uCore stable stream, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-testing",
+      "selection": {
+        "image": "ucore",
+        "stream": "testing",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:testing",
+      "description": "A container and storage host with NAS tools, in the uCore testing stream. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-testing-nvidia",
+      "selection": {
+        "image": "ucore",
+        "stream": "testing",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:testing-nvidia",
+      "description": "A container and storage host with NAS tools, in the uCore testing stream, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-testing-nvidia-lts",
+      "selection": {
+        "image": "ucore",
+        "stream": "testing",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:testing-nvidia-lts",
+      "description": "A container and storage host with NAS tools, in the uCore testing stream, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-lts",
+      "selection": {
+        "image": "ucore",
+        "stream": "lts",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:lts",
+      "description": "A container and storage host with NAS tools, on the stable base with a longterm kernel. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-lts-nvidia",
+      "selection": {
+        "image": "ucore",
+        "stream": "lts",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:lts-nvidia",
+      "description": "A container and storage host with NAS tools, on the stable base with a longterm kernel, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "ucore-lts-nvidia-lts",
+      "selection": {
+        "image": "ucore",
+        "stream": "lts",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore:lts-nvidia-lts",
+      "description": "A container and storage host with NAS tools, on the stable base with a longterm kernel, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-stable",
+      "selection": {
+        "image": "hci",
+        "stream": "stable",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:stable",
+      "description": "A container, storage, and virtual machine host, in the uCore stable stream. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-stable-nvidia",
+      "selection": {
+        "image": "hci",
+        "stream": "stable",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:stable-nvidia",
+      "description": "A container, storage, and virtual machine host, in the uCore stable stream, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-stable-nvidia-lts",
+      "selection": {
+        "image": "hci",
+        "stream": "stable",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:stable-nvidia-lts",
+      "description": "A container, storage, and virtual machine host, in the uCore stable stream, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-testing",
+      "selection": {
+        "image": "hci",
+        "stream": "testing",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:testing",
+      "description": "A container, storage, and virtual machine host, in the uCore testing stream. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-testing-nvidia",
+      "selection": {
+        "image": "hci",
+        "stream": "testing",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:testing-nvidia",
+      "description": "A container, storage, and virtual machine host, in the uCore testing stream, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-testing-nvidia-lts",
+      "selection": {
+        "image": "hci",
+        "stream": "testing",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:testing-nvidia-lts",
+      "description": "A container, storage, and virtual machine host, in the uCore testing stream, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-lts",
+      "selection": {
+        "image": "hci",
+        "stream": "lts",
+        "gpu": "none"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:lts",
+      "description": "A container, storage, and virtual machine host, on the stable base with a longterm kernel. No NVIDIA driver variant.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-lts-nvidia",
+      "selection": {
+        "image": "hci",
+        "stream": "lts",
+        "gpu": "latest"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:lts-nvidia",
+      "description": "A container, storage, and virtual machine host, on the stable base with a longterm kernel, with the latest open NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    },
+    {
+      "id": "hci-lts-nvidia-lts",
+      "selection": {
+        "image": "hci",
+        "stream": "lts",
+        "gpu": "lts"
+      },
+      "imageRef": "ghcr.io/ublue-os/ucore-hci:lts-nvidia-lts",
+      "description": "A container, storage, and virtual machine host, on the stable base with a longterm kernel, with the LTS NVIDIA driver. Check GPU compatibility.",
+      "workflows": {
+        "fresh": "fresh",
+        "coreos": "coreos",
+        "bootc": "bootc",
+        "ostree": "ostree",
+        "unsupported": "unsupported"
+      }
+    }
+  ]
+}

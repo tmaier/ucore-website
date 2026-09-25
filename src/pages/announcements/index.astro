@@ -1,0 +1,17 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import AnnouncementList from '../../components/AnnouncementList.astro';
+import { sortAnnouncements } from '../../lib/announcements';
+
+const announcements = sortAnnouncements(await getCollection('announcements'));
+---
+
+<Base title="Announcements" description="Decisions, changes, and the occasional thing that needs your attention.">
+	<header class="page-hero">
+		<h1>Announcements</h1>
+		<p class="lead">Decisions, changes, and the occasional thing that needs your attention.</p>
+		<a class="rss" href="/feed.xml">Subscribe with RSS</a>
+	</header>
+	<AnnouncementList items={announcements} />
+</Base>

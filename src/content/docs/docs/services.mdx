@@ -1,0 +1,27 @@
+---
+title: Services
+description: Enable the preinstalled system services you intend to use.
+sidebar:
+  order: 8
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#default-services
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+To keep uCore useful as a minimal container host, most added services are installed but not enabled automatically. Choose the services you need, review their configuration, then enable and start them deliberately.
+
+## Enable a service
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+
+<CommandBlock label="Enable and start a service" command="sudo systemctl enable --now SERVICENAME.service" />
+
+## Included services
+
+Depending on the chosen image and hardware, included services may include Cockpit, Tailscale, Docker/Moby, NFS, Samba, and ZFS tooling. See [Choosing an image](/docs/images/) for which packages belong to each image family, and the dedicated [NAS](/docs/nas/), [ZFS](/docs/zfs/), and [NVIDIA](/docs/nvidia/) guides for service-specific configuration.
+
+`libvirtd` is enabled by default in `ucore-hci` but starts on demand through its socket, for example when called by `virsh` or another client. See [NVIDIA](/docs/nvidia/) for GPU-specific container setup and [Containers](/docs/containers/) for Podman restart behavior.
+
+Do not expose a service to a network until its authentication, firewall rules, and data permissions are configured for your environment.
+
+Source: [uCore service guidance](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#default-services). Checked September 18, 2026.

@@ -1,0 +1,7 @@
+.astro/
+.wrangler/
+dist/
+fixture-dist/
+node_modules/
+prototype/
+.DS_Store

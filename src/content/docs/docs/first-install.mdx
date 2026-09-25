@@ -1,0 +1,109 @@
+---
+title: First installation
+description: Install uCore using Fedora CoreOS provisioning tools and the uCore auto-rebase configuration.
+sidebar:
+  order: 2
+source: https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#installation
+sourceRevision: 75ec7d8d10bc8af6fe23a284ea108bacd50f3173
+sourceCheckedAt: '2026-09-18'
+---
+
+import CommandBlock from '../../../components/CommandBlock.astro';
+import Note from '../../../components/Note.astro';
+
+<Note><strong>Install uCore on your machine.</strong> You need a Butane file and its compiled Ignition configuration. There is no uCore graphical installer. Test the configuration in a VM first, and back up anything on the disk you intend to install to.</Note>
+
+<span id="prepare" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Before you begin
+
+Have console access, a network connection for first boot, an SSH public key, and a dedicated target disk. Prepare the configuration on another computer with Podman or Docker; these examples use Podman.
+
+[Choose your uCore image](/#images). The examples use `ghcr.io/ublue-os/ucore:stable`. The registry manifest selects x86_64 or aarch64 automatically; the Fedora CoreOS installation media still needs to match your machine's architecture.
+
+For a UEFI system using Secure Boot, follow the [enrollment guide](/docs/secure-boot/). The documented fresh-install path temporarily disables Secure Boot so you can reach uCore and enroll its signing key.
+
+<span id="configure" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Prepare your Butane configuration
+
+Download the project's [auto-rebase Butane template](/examples/ucore-autorebase.butane) and save it as `ucore-autorebase.butane`. You can also [inspect the upstream source](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/examples/ucore-autorebase.butane).
+
+1. Replace `YOUR_SSH_PUB_KEY_HERE` with your SSH **public** key.
+2. Replace `YOUR_GOOD_PASSWORD_HASH_HERE` with a password hash. Follow the [Butane authentication example](https://coreos.github.io/butane/examples/#using-password-authentication); do not put a plaintext password in the hash field.
+3. If you chose a different image, replace **both** occurrences of `ghcr.io/ublue-os/ucore:stable` with the same image reference. They belong to two different rebase stages.
+
+Read the full file before using it. Add any machine-specific networking or storage configuration you need. Protect the configuration: it contains access information and may contain other secrets you add.
+
+<span id="compile" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Compile it to Ignition
+
+Run this on your preparation computer from the directory containing the Butane file. The container reads from standard input, so no host directory mount is needed.
+
+<CommandBlock label="Preparation computer / compile configuration" command={`podman run --interactive --rm quay.io/coreos/butane:release \\
+  --pretty --strict < ucore-autorebase.butane > ucore-autorebase.ign`} />
+
+Proceed only if Butane exits successfully. Correct validation errors in the Butane source and compile again. Ignition is the resulting JSON configuration, not a file to edit by hand.
+
+<span id="install" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Install with CoreOS tooling, then switch to uCore
+
+Download the appropriate live ISO from [Fedora CoreOS](https://fedoraproject.org/coreos/download/?stream=stable#baremetal) and boot it on your target machine. Follow the [Fedora CoreOS bare-metal guide](https://docs.fedoraproject.org/en-US/fedora-coreos/bare-metal/). Copy `ucore-autorebase.ign` into the live environment's current directory.
+
+<Note><strong>Confirm the target disk.</strong> The command below installs to the disk you name and can destroy existing data on it. Replace `/dev/REPLACE_WITH_TARGET_DISK` with your actual OS disk; it is deliberately not a usable device name.</Note>
+
+<CommandBlock label="Live ISO / install to the confirmed target disk" command={`sudo coreos-installer install /dev/REPLACE_WITH_TARGET_DISK \\
+  --ignition-file ucore-autorebase.ign`} />
+
+After the installer reports success, remove or detach the installation media and reboot.
+
+<CommandBlock label="Live ISO / reboot after installation" command="sudo systemctl reboot" />
+
+For cloud and hypervisor images, supply Ignition using the platform's provisioning mechanism instead. The [Fedora CoreOS platform guides](https://docs.fedoraproject.org/en-US/fedora-coreos/) cover those paths.
+
+### What happens on first boot
+
+1. Fedora CoreOS applies the Ignition configuration.
+2. The first service rebases to your chosen uCore image using the initial unverified-registry reference, then reboots.
+3. The second service switches to the signed image reference now that uCore's verification policy is present, then reboots again.
+
+The result is a uCore system, with uCore's software and update behavior. Allow both stages to finish and keep networking available. If a stage fails, inspect the console and the corresponding service journal; do not assume the later signed stage has run.
+
+<span id="verify" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Confirm you reached uCore
+
+Sign in as `core` using the SSH key or password you configured. Check the booted image and both service journals.
+
+<CommandBlock label="Installed system / deployment and provisioning status" command={`sudo rpm-ostree status
+sudo journalctl \\
+  -u ucore-unsigned-autorebase.service \\
+  -u ucore-signed-autorebase.service \\
+  --no-pager`} />
+
+The booted deployment should be your selected uCore image with the signed reference. Confirm the signed stage succeeded. If using Secure Boot, [enroll the key](/docs/secure-boot/#enroll) before turning Secure Boot back on.
+
+You can independently verify the published image on a computer with cosign installed:
+
+<CommandBlock label="Computer with cosign / verify the default image" command={`cosign verify \\
+  --key https://github.com/ublue-os/ucore/raw/main/cosign.pub \\
+  ghcr.io/ublue-os/ucore:stable`} />
+
+This verifies the image signature. It does not enroll a Secure Boot key, audit your configuration, or verify a particular architecture's SBOM. For that, follow the [digest-specific provenance instructions](/docs/verification/).
+
+Once you have a working deployment, read Fedora's [manual rollback guidance](https://docs.fedoraproject.org/en-US/fedora-coreos/manual-rollbacks/) and the [deployment-pinning instructions](https://github.com/ublue-os/ucore/#manual-installrebase) linked by the project. Configure your shares, services, and backups deliberately; most added services are not enabled automatically.
+
+<span id="existing" class="heading-anchor-alias" aria-hidden="true"></span>
+
+## Already have a running system?
+
+- **Fedora CoreOS:** use the [existing-CoreOS path](/docs/rebasing/#fedora-coreos), including the initial rebase, reboot, signed-reference rebase, and second reboot.
+- **uCore managed with bootc:** use the [existing-uCore bootc path](/docs/rebasing/#existing-bootc-managed-ucore). Confirm the system is healthy and its container-signing policy is intact.
+- **uCore still managed with rpm-ostree:** use the [signed rpm-ostree path](/docs/rebasing/#existing-rpm-ostree-managed-ucore). Do not guess which update manager applies.
+- **Fedora Atomic desktop or Fedora IoT:** a direct rebase to uCore is unsupported. Use the CoreOS installer to reinstall with the uCore auto-rebase configuration, which switches the machine to uCore on first boot.
+
+[Choose the applicable transition instructions](/#images).
+
+Source: [uCore installation guide and auto-rebase example](https://github.com/ublue-os/ucore/tree/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/examples), [Butane](https://coreos.github.io/butane/getting-started/), and Fedora CoreOS provisioning documentation. Checked September 18, 2026. Commands are documented from these sources and have not been exercised on real hardware by this site build.

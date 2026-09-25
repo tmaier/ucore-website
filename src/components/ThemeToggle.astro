@@ -1,0 +1,22 @@
+<button
+	class="theme-toggle"
+	type="button"
+	data-theme-toggle
+	aria-label="Switch to light theme"
+	title="Switch to light theme"
+>
+	<span class="theme-glyph" aria-hidden="true"></span>
+</button>
+
+<script>
+	declare global {
+	interface Window {
+			StarlightThemeProvider?: { toggleTheme(): void; updateControls(): void };
+		}
+	}
+
+	const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+	const provider = window.StarlightThemeProvider;
+	provider?.updateControls();
+	toggle?.addEventListener('click', () => provider?.toggleTheme());
+</script>

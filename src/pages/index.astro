@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import LayerStack from '../components/LayerStack.astro';
+import Layers from '../components/Layers.astro';
+import ImagePicker from '../components/ImagePicker.astro';
+import LinkCards from '../components/LinkCards.astro';
+---
+
+<Base
+	title="Uneventful by design"
+	description="uCore is an opinionated, container-first, storage and virtualization ready server OS base layer."
+>
+	<section class="hero-section" aria-labelledby="home-title">
+		<div class="hero-copy">
+			<p class="eyebrow">THE OS BASE LAYER</p>
+			<h1 id="home-title">Uneventful<br />by design.</h1>
+			<p class="hero-lede">Opinionated, container-first, storage and virtualization ready: the OS base layer.</p>
+			<div class="hero-actions">
+				<a class="button button-primary" href="/docs/">Understand uCore</a>
+				<a class="button button-secondary" href="https://github.com/ublue-os/ucore">Explore the repository</a>
+			</div>
+		</div>
+		<LayerStack />
+	</section>
+
+	<Layers />
+
+	<section id="images" class="home-section picker-section" data-reveal="out" aria-labelledby="picker-title">
+		<div class="section-heading">
+			<h2 id="picker-title">Find your image.</h2>
+			<a class="section-link" href="/docs/images/#tags">All images and tags <span aria-hidden="true">→</span></a>
+		</div>
+		<ImagePicker />
+	</section>
+
+	<LinkCards />
+</Base>

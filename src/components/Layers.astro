@@ -1,0 +1,28 @@
+---
+import { picker } from '../lib/picker';
+
+const colors = ['mute', 'accent2', 'cyan'];
+const margins = ['0 48px', '0 24px', '0'];
+---
+
+<section class="home-section layers-section" data-reveal="out" aria-labelledby="layers-title">
+	<div class="section-heading">
+		<h2 id="layers-title">Choose your starting point.</h2>
+		<p>Three images, each adds another layer of capability.</p>
+	</div>
+	<div class="layer-slabs">
+		{picker.images.map((image, index) => (
+			<button
+				class:list={['layer-slab', `layer-slab-${index + 1}`]}
+				style={`--layer-side-margin:${margins[index]}`}
+				type="button"
+				data-pick-image={image.name === 'ucore-minimal' ? 'minimal' : image.name === 'ucore-hci' ? 'hci' : 'ucore'}
+				aria-label={`Use ${image.name} in the image picker`}
+			>
+				<span class="layer-name">{image.name}</span>
+				<span class="layer-description">{image.description}</span>
+				<span class:list={['layer-tag', `layer-tag-${colors[index]}`]}>LAYER 0{index + 1}</span>
+			</button>
+		))}
+	</div>
+</section>
