@@ -37,7 +37,7 @@ The production build is static output in `dist/`. Cloudflare Pages uses `pnpm in
 
 The image picker is maintained in `src/data/picker.json`. Its 27 full image references were checked against the uCore README and workflow at revision `75ec7d8d10bc8af6fe23a284ea108bacd50f3173` on September 18, 2026. The Butane auto-rebase example is copied from the same revision. Announcement publication dates and original source links are retained in the content collection; docs pages record their source and review date.
 
-The site adapts documentation from [ublue-os/ucore](https://github.com/ublue-os/ucore), licensed under Apache-2.0. The upstream project README remains the current source for build and release details; site content should be refreshed deliberately when that source changes.
+The site adapts user-facing documentation from [ublue-os/ucore](https://github.com/ublue-os/ucore), licensed under Apache-2.0. Image definitions live in [`ucore/`](https://github.com/ublue-os/ucore/tree/main/ucore); build and release behavior is defined by the [Justfile](https://github.com/ublue-os/ucore/blob/main/ucore/Justfile) and [GitHub workflows](https://github.com/ublue-os/ucore/tree/main/.github/workflows). Site citations pin the source revision checked for each page. Review and refresh user-facing docs when those sources change.
 
 ## Hosting
 

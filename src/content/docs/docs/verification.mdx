@@ -63,6 +63,8 @@ Pull the artifact and verify its signature with the same public key:
 
 [GitHub Releases](https://github.com/ublue-os/ucore/releases) provide generated changelogs for stable, testing, and lts. Tags use the stream and date, such as `stable-YYYYMMDD`; stable is marked as GitHub's latest release. Releases follow successful full image builds. Scheduled builds without relevant RPM changes do not publish releases.
 
+Scheduled comparisons track `ucore`, so changes limited to `ucore-hci` are included with the next shared update. Maintainers can publish an HCI-only update by running the stream workflow with `force_build` enabled. A later build on the same day updates that day's release.
+
 Changelogs group RPM additions, removals, and upgrades by image family, NVIDIA variant, and architecture. Releases are changelog notes, not image downloads. Images remain in [GitHub Container Registry](https://github.com/orgs/ublue-os/packages?repo_name=ucore).
 
 Source: [uCore verification and build transparency](https://github.com/ublue-os/ucore/blob/75ec7d8d10bc8af6fe23a284ea108bacd50f3173/README.md#build-transparency-and-releases). Checked September 18, 2026.
