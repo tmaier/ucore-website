@@ -190,6 +190,9 @@ const homeMarkdown = readFileSync(path.join(output, 'index.md'), 'utf8');
 for (const imageRef of imageRefs) assert(homeMarkdown.includes(`\`${imageRef}\``), `index.md is missing image reference ${imageRef}.`);
 
 const llms = readFileSync(assertExists('llms.txt'), 'utf8');
+for (const [rel, href] of [['llms-txt', '/llms.txt'], ['llms-full-txt', '/llms-full.txt']]) {
+	assert(new RegExp(`<link\\b[^>]*\\brel=["']${rel}["'][^>]*\\bhref=["']${href}["']`).test(home), `Homepage is missing <link rel="${rel}">.`);
+}
 assert(llms.startsWith('# uCore\n\n> '), 'llms.txt must start with an H1 and a summary blockquote.');
 assert(/^## Optional$/m.test(llms), 'llms.txt is missing its Optional section.');
 const llmsLinks = [...llms.matchAll(/\]\((https:\/\/projectucore\.org\/[^)\s]+\.md)\)/g)].map((match) => new URL(match[1]).pathname);
